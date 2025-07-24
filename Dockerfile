@@ -1,8 +1,10 @@
+# Use Python slim base image
 FROM python:3.10-slim
 
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (nginx, wkhtmltopdf for PDF generation)
 RUN apt-get update && apt-get install -y \
     nginx \
     wkhtmltopdf \
@@ -12,15 +14,18 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy application code
 COPY . .
 
-# Copy NGINX config
+# Copy and set permissions for start script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Make the start script executable inside the container
-RUN chmod +x /app/start.sh
-
+# Expose Cloud Run port
 EXPOSE 8080
 
-CMD ["bash", "start.sh"]
+# Start both FastAPI (Uvicorn) and Streamlit via NGINX
+CMD ["/start.sh"]
