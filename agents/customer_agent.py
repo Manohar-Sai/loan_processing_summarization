@@ -1,25 +1,15 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
-from core.config import GOOGLE_API_KEY
+import json
+from core.llm import get_gemini_llm
+from agents.schemas import CustomerOutput
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash",
-    google_api_key=GOOGLE_API_KEY,
-    temperature=0
-)
+llm = get_gemini_llm()
 
-def customer_interaction_agent(user_query: str) -> str:
-    """
-    Prompts Gemini to clarify loan intent and collect key info:
-    income, desired loan amount, property location/type, any existing debt.
-    Returns Gemini's structured text response.
-    """
-    messages = [
-        (
-            "system",
-            "You are a home‑loan assistant. Ask the user to provide income, desired loan amount, "
-            "property value & location, and existing debts if any."
-        ),
-        ("human", user_query)
-    ]
-    response = llm.invoke(messages)
-    return response.content
+def customer_interaction_agent(user_query: str) -> dict:
+    prompt = (
+        "You are a loan assistant. Identify loan_type (home/personal/car) and collect "
+        "income, value (property/car or loan amount), existing_debt, cibil_score. "
+        "Answer in JSON with keys: loan_type, income, value, existing_debt, cibil_score."
+    )
+    structured = llm.with_structured_output(CustomerOutput)
+    resp = structured.invoke(prompt + "\nUser: " + user_query)
+    return resp.model_dump()

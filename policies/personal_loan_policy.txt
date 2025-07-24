@@ -1,0 +1,8 @@
+Personal Loan Policy — Bank Guidelines (2025)
+
+- Unsecured personal loans; no collateral required.
+- Interest rate: approximately 16% (diminishing Balance)  :contentReference[oaicite:6]{index=6}
+- CIBIL score requirement: ≥ 700–725  :contentReference[oaicite:7]{index=7}
+- Tenure: 1–5 years, sometimes up to 7 years  :contentReference[oaicite:8]{index=8}
+- Income requirement: ₹20k–₹25k per month  :contentReference[oaicite:9]{index=9}
+- DTI ratio: EMI + debt ≤ 50% of income  :contentReference[oaicite:10]{index=10}

@@ -1,0 +1,10 @@
+Home Loan Policy — RBI & Bank Guidelines (2025)
+
+- LTV Ratio:
+  • Up to ₹30 lakh → 90%
+  • ₹30–75 lakh → 80%
+  • Above ₹75 lakh → 75%  :contentReference[oaicite:1]{index=1}
+- Prepayment penalty: no charges on floating-rate loans; up to 3% on fixed-rate  :contentReference[oaicite:2]{index=2}
+- Banks must return property documents within 30 days post repayment; ₹5,000/day penalty for delay  :contentReference[oaicite:3]{index=3}
+- Income eligibility: ₹25k–₹30k per month minimum; CIBIL ≥ 725; DTI ≤ 50%  :contentReference[oaicite:4]{index=4}
+- Tenure: up to 20–25 years  :contentReference[oaicite:5]{index=5}

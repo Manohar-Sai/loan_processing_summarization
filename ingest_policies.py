@@ -1,5 +1,6 @@
 from pinecone import Pinecone, ServerlessSpec
 import os
+from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_pinecone import PineconeVectorStore
@@ -20,17 +21,24 @@ def load_documents_from_folder(folder_path: str):
             loader = TextLoader(full)
         else:
             continue
-        docs.extend(loader.load())
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    return splitter.split_documents(docs)
+        chunks = splitter.split_documents(loader.load())
+
+        # ✅ Inject loan_type metadata based on filename (home_loan_policy.txt → "home")
+        loan_type = Path(fname).stem.split("_")[0]
+        for c in chunks:
+            c.metadata["loan_type"] = loan_type
+            c.metadata["source_file"] = fname.split('/')[-1]
+        docs.extend(chunks)
+    return docs
 
 index_name = os.getenv("PINECONE_INDEX", "loan-policy-index")
 if not pc.list_indexes().names():
     print(PINECONE_ENV)
     pc.create_index(
         name=index_name,
-        dimension=1536,
+        dimension=3072,
         metric="cosine",
         spec=ServerlessSpec(cloud="aws", region=PINECONE_ENV)
     )

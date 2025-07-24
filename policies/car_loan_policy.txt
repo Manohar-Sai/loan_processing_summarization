@@ -1,0 +1,11 @@
+Car Loan Policy — New & Used Cars (2025)
+
+- LTV Ratio:
+  • New cars: 85–100% of on-road price
+  • Used cars: 75–90%  :contentReference[oaicite:11]{index=11}
+- Interest: ~8.9–11.25% depending on lender & CIBIL score  :contentReference[oaicite:12]{index=12}
+- CIBIL requirement: ≥ 700  :contentReference[oaicite:13]{index=13}
+- Tenure:
+  • New: 12–84 months
+  • Used: 12–60 months  :contentReference[oaicite:14]{index=14}
+- EMI cap: ≤ 70–75% of net monthly income  :contentReference[oaicite:15]{index=15}
