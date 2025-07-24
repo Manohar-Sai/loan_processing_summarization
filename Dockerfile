@@ -28,4 +28,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 8080
 
 # Start both FastAPI (Uvicorn) and Streamlit via NGINX
-CMD ["/start.sh"]
+CMD ["./start.sh"]
