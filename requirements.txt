@@ -17,6 +17,7 @@ colorama==0.4.6
 cssselect2==0.8.0
 dataclasses-json==0.6.7
 distro==1.9.0
+docopt==0.6.2
 fastapi==0.116.1
 filetype==1.2.0
 fonttools==4.59.0
@@ -56,14 +57,17 @@ langgraph-checkpoint==2.1.1
 langgraph-prebuilt==0.5.2
 langgraph-sdk==0.1.73
 langsmith==0.4.6
+Markdown==3.8.2
 markdown-it-py==3.0.0
+markdown2==2.5.3
 MarkupSafe==3.0.2
 marshmallow==3.26.1
+md2pdf==1.0.1
 mdurl==0.1.2
 multidict==6.6.3
 mypy_extensions==1.1.0
 narwhals==1.48.0
-numpy==1.26.4
+numpy
 openai==1.97.0
 orjson==3.11.0
 ormsgpack==1.10.0
