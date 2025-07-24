@@ -1,22 +1,27 @@
-# Use the official Python image from Docker Hub
+# Use Python base image
 FROM python:3.10-slim
 
-# Set the working directory in the container
+# Install wkhtmltopdf, Nginx, and dependencies
+RUN apt-get update && apt-get install -y wkhtmltopdf nginx && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-
-RUN apt-get update && apt-get install -y wkhtmltopdf && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Copy the requirements.txt file and install dependencies
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Copy all files
 COPY . .
 
-# Specify the command to run the app
-# Expose ports for FastAPI and Streamlit
-EXPOSE 8501
+# Copy Nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Start both FastAPI and Streamlit in parallel using bash
-CMD uvicorn app:app --host 0.0.0.0 --port 8000 & streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501
+# Expose Cloud Run's single port
+EXPOSE 8080
+
+# Start FastAPI, Streamlit, and Nginx
+CMD uvicorn app.main:app --host 0.0.0.0 --port 8000 & \
+    streamlit run app/streamlit_app.py --server.address 0.0.0.0 --server.port 8501 & \
+    nginx -g "daemon off;"
+
