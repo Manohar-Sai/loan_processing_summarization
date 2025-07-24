@@ -16,7 +16,7 @@ COPY . .
 
 # Specify the command to run the app
 # Expose ports for FastAPI and Streamlit
-EXPOSE 8501
+EXPOSE 8080
 
 # Start both FastAPI and Streamlit in parallel using bash
-CMD streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8501
+CMD streamlit run streamlit_app.py --server.address 0.0.0.0 --server.port 8080
