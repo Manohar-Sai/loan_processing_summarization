@@ -48,7 +48,7 @@ with left:
     submitted = st.button("🚀 Submit Application")
 
 with right:
-    st.subheader("📜 Loan Report Preview")
+    # st.subheader("📜 Loan Report Preview")
     preview_placeholder = st.empty()
 
 # 🔹 Submit Action
@@ -98,7 +98,7 @@ if submitted:
                 </style>
             </head>
             <body>
-                {md_report.replace("\\n", "<br>")}
+                {md_report.replace(r"\n", "<br>")}
             </body>
             </html>
             """
