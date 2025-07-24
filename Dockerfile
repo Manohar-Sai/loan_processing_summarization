@@ -16,7 +16,6 @@ COPY . .
 
 # Specify the command to run the app
 # Expose ports for FastAPI and Streamlit
-EXPOSE 8000
 EXPOSE 8501
 
 # Start both FastAPI and Streamlit in parallel using bash
