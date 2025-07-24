@@ -98,7 +98,7 @@ if submitted:
                 </style>
             </head>
             <body>
-                {md_report.replace("\n", "<br>")}
+                {md_report.replace(r"\n", "<br>")}
             </body>
             </html>
             """
