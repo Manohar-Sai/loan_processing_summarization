@@ -54,6 +54,6 @@ def generate_markdown_report(applicant_name: str, decision: dict) -> str:
         md += """\n---\n## 📝 Recommendation
         
         """
-        md += f"{decision.get("recommendation",[])}"
+        md += str(decision["recommendation"])
     md += "\n---\n**This report is system-generated based on current loan policies.**"
     return md
