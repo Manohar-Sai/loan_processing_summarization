@@ -8,10 +8,12 @@ import math
 
 def calculate_emi(principal: float, annual_interest_rate: float, tenure_months: int) -> float:
     r = (annual_interest_rate / 12) / 100
+    print(annual_interest_rate, r)
     n = tenure_months
     if r == 0:
         return principal / n
-    emi = (principal * r * ((1 + r) ** n)) / (((1 + r) ** n) - 1)
+    emi = (principal * r * ((1 + r) **   n)) / (((1 + r) ** n) - 1)
+    print(emi,n)
     return round(emi, 2)
 
 def decision_recommendation_agent(applicant_data: dict, loan_type: str) -> dict:
@@ -22,10 +24,11 @@ def decision_recommendation_agent(applicant_data: dict, loan_type: str) -> dict:
     llm = get_gemini_llm()
     rag_res = run_rag_query(
         llm=llm,
-        query=f"What is the typical tenure (in months) for {loan_type} loans as per policy?",
+        query=f"What is the maximum tenure (in months) for {loan_type} loans as per policy?",
     )
 
     # Extract tenure (fallback to defaults if not found)
+    print(rag_res, '-----------------------------')
     try:
         tenure_months = int([int(s) for s in rag_res["answer"].split() if s.isdigit()][0])
     except Exception:
@@ -36,6 +39,7 @@ def decision_recommendation_agent(applicant_data: dict, loan_type: str) -> dict:
  
     # ✅ Step 3: Adjust loan amount to respect DTI limits
     emi = calculate_emi(max_loan, interest_rate, tenure_months)
+    # print(emi, '---------------------------------------------------')
     total_dti = ((existing_debt + emi) / (income / 12)) * 100 if income else 100
 
     # Reduce loan if DTI exceeds allowed policy

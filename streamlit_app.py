@@ -4,12 +4,60 @@ import requests
 
 API_URL = "http://localhost:8000/process_loan/"
 
+st.set_page_config(page_title="Loan Eligibility Checker", layout="centered")
+
+st.markdown(
+    """
+    <style>
+    .main {
+        background-color: #f0f2f6;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+    }
+    .stTextInput>div>div>input {
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        padding: 10px;
+    }
+    .stNumberInput>div>div>input {
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        padding: 10px;
+    }
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .stAlert {
+        border-radius: 8px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("🏦 Loan Application Assistant")
 
 # 1. Loan type and dynamic guidance
 name = st.text_input("Your Name")
 loan_type = st.selectbox("Loan Type", ["home", "personal", "car"])
-loan_amount = st.number_input("Required Loan Amount", min_value= 0, step = 1000)
+# loan_amount = st.number_input("Required Loan Amount", min_value= 0, step = 1000)
+loan_amount = st.slider("Required Loan Amount", min_value = 100000, max_value = 20000000, step = 1000)
 monthly_debt = st.number_input("Monthly Debt Amount", min_value= 0, step = 1000)
 
 if loan_type == "home":
@@ -71,8 +119,8 @@ if st.button("Submit Application"):
             st.subheader("💡 Recommendation & Policy Context")
             st.json(result["recommendation"])
             st.subheader("📚 Policy Sources")
-            for src in result["policy_sources"]:
-                loan_cat = src["metadata"].get("loan_type", "unknown").title()
-                st.markdown(f"- **{loan_cat}**: {src['text'][:200]}…")
+            # for src in result["policy_sources"]:
+            #     loan_cat = src["metadata"].get("loan_type", "unknown").title()
+            #     st.markdown(f"- **{loan_cat}**: {src['text'][:200]}…")
         else:
             st.error(f"Error {response.status_code}: {response.text}")

@@ -30,9 +30,9 @@ def document_processing_agent(
     parts = [
         {"type": "text", "text": (
             "Extract the following in JSON:\n"
-            "- income_annual (annual income in INR)\n"
-            "- cibil_score (integer)\n"
-            "- asset_value (property or car value in INR)"
+            "- income_annual (annual income in INR): Calulate this based on attached payslips and calulate for annual\n"
+            "- cibil_score (integer): Extract this from the attached cibil document\n"
+            "- asset_value (property or car value in INR): Extract this from the attached asset docucmentLl"
         )}
     ]
 

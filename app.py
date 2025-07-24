@@ -80,8 +80,10 @@ def decision_node(s: LoanState):
     }
     # context = f'income: {s["income_annual"]}, cibil_score: {s["cibil_score"]}, value: {s["asset_value"]}'
     res = decision_recommendation_agent(details, s["loan_type"])
-    s["recommendation"] = res["recommendation"]
-    s["policy_sources"] = res["policy_sources"]
+    # s["recommendation"] = res["recommendation"]
+    # s["policy_sources"] = res["policy_sources"]
+    s["recommendation"] = res
+
     return s
 
 # graph.add_node("customer_node", customer_node)
@@ -151,7 +153,7 @@ async def process_loan(
         "customer_name": name,
         "eligibility": state["eligibility"],
         "recommendation": state["recommendation"],
-        "policy_sources": state["policy_sources"]
+        # "policy_sources": state["policy_sources"]
     }
 
 

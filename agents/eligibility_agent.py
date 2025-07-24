@@ -1,5 +1,6 @@
 from typing import Dict, Any
 import math
+import json
 from core.rag import run_rag_query
 from core.llm import get_gemini_llm
 from agents.schemas import PolicyThresholdsSchema
@@ -22,18 +23,20 @@ def eligibility_risk_assessment_agent(applicant_data: Dict[str, Any]) -> Dict[st
     llm = get_gemini_llm()
     rag_res = run_rag_query(
         llm=llm,
-        query=f"Give {loan_type} loan policy CIBIL, DTI, and interest rate requirements in numbers. Always extract DTI in percentage without percentage symbol.",
+        query=f"Give {loan_type} loan policy CIBIL, DTI, interest rate and monthly income eligibility/requirements in numbers. Always extract DTI in percentage without percentage symbol.",
     )
 
     # Extract thresholds using structured output
     structured = llm.with_structured_output(PolicyThresholdsSchema)
     thresholds = structured.invoke(
-        f"Extract min_cibil, max_dti, and interest_rate from:\n\n{rag_res['answer']}"
+        f"Extract min_cibil, max_dti, and interest_rate from below policy:\n\n{rag_res['answer']}\n\n Consider the following applicant data: \n\n {json.dumps(applicant_data)} \n\nReveiw the data with the given policy and determine whether the applicant is eligible (Yes/No) with the field_name/key income_threshold. Give the reasoning for income_threshold with field_name/key income_reasoning"
+
     ).model_dump()
 
     min_cibil = thresholds.get("min_cibil", 700)
     max_dti = thresholds.get("max_dti", 50.0)
     interest_rate = thresholds.get("interest_rate", 10.0)
+    print(thresholds)
     result = {
         "eligible": True,
         "reasons": [],
@@ -60,7 +63,7 @@ def eligibility_risk_assessment_agent(applicant_data: Dict[str, Any]) -> Dict[st
 
     # 3. Loan-to-Value checks for secured loans
     if loan_type in ("home", "car"):   
-        property_value = float(applicant_data.get("property_value", 0))
+        property_value = float(applicant_data.get("asset_value", 0))
         if property_value <= 0:
             result["eligible"] = False
             result["reasons"].append(

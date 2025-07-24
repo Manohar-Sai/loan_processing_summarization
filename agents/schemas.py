@@ -29,6 +29,8 @@ class DocumentExtraction(BaseModel):
     income_annual: float = Field(..., description="Annual income in INR")
     cibil_score: int = Field(..., description="CIBIL credit score (integer)")
     asset_value: float = Field(..., description="Property or car value in INR")
+    income_threshold: str = Field(...)
+    income_reasoning: str = Field(...)
 
 
 class PolicyThresholdsSchema(BaseModel):
