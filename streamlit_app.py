@@ -31,7 +31,6 @@ from typing import TypedDict, Any, List
 class LoanState(TypedDict):
     name: str
     loan_type: str
-    req_loan_amount: float
     cibil_score: Any
     income_monthly: Any
     asset_value: Any
@@ -141,7 +140,6 @@ def process_loan(
     state["cibil_score"] = doc_data["cibil_score"]
     state["asset_value"] = doc_data["asset_value"]
     state['monthly_debt'] = monthly_debt
-    state['req_loan_amount'] = req_loan_amount
 
     state = workflow.invoke(state)
 
@@ -176,7 +174,6 @@ with left:
 
     name = st.text_input("Your Name")
     loan_type = st.selectbox("Loan Type", ["home", "personal", "car"])
-    loan_amount = st.number_input("Required Loan Amount", min_value=0, step=1000)
     monthly_debt = st.number_input("Monthly Debt Amount", min_value=0, step=1000)
 
     if loan_type == "home":
@@ -232,7 +229,6 @@ if submitted:
             "loan_type": loan_type,
             "name": name,
             "monthly_debt": monthly_debt,
-            "req_loan_amount": loan_amount
         }
         # st.markdown(hello('this is working'))
 
@@ -240,7 +236,6 @@ if submitted:
         result = process_loan(
             name,
             loan_type,
-            loan_amount,
             monthly_debt,
             cibil_report,
             salary_slips,
