@@ -88,6 +88,7 @@ if submitted:
             preview_placeholder.markdown(md_report, unsafe_allow_html=True)
 
             # ✅ PDF Download
+            html_body = md_report.replace("\n", "<br>")
             html_report = f"""
             <html>
             <head>
@@ -98,7 +99,7 @@ if submitted:
                 </style>
             </head>
             <body>
-                {md_report.replace(r"\n", "<br>")}
+                {html_body}
             </body>
             </html>
             """
