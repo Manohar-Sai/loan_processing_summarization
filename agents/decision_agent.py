@@ -56,7 +56,7 @@ def decision_recommendation_agent(data) -> dict:
             'recommendation': summary['recommendation'],
             'applicable_rules': [
             f"Minimum Cibil Score: {data['cibil_score']}",
-            f"Income Criteria: {data["policy_info"]["income_threshold"]}",
+            f'Income Criteria: {data["policy_info"]["income_threshold"]}',
             f"Max DTI Allowed: {max_dti}%",
             f"Max Tenure Available: {max_tenure} months",
             f"Interest Rate: {interest_rate}%",
