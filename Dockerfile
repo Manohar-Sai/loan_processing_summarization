@@ -14,4 +14,4 @@ COPY . .
 # Specify the command to run the app
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
 
-CMD ["streamlit", "run", "streamlit_appy.py", "--server.port=8080", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8080", "--server.address=0.0.0.0"]
