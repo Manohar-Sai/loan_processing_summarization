@@ -1,101 +1,66 @@
-# streamlit_app.py
 import streamlit as st
 import requests
+import tempfile
+import pdfkit
+from core.report_generator import generate_markdown_report
 
 API_URL = "http://localhost:8000/process_loan/"
 
-st.set_page_config(page_title="Loan Eligibility Checker", layout="centered")
-
-st.markdown(
-    """
-    <style>
-    .main {
-        background-color: #f0f2f6;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-size: 16px;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #45a049;
-    }
-    .stTextInput>div>div>input {
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        padding: 10px;
-    }
-    .stNumberInput>div>div>input {
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        padding: 10px;
-    }
-    h1 {
-        color: #2c3e50;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .stAlert {
-        border-radius: 8px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+st.set_page_config(page_title="🏦 Loan Eligibility Checker", layout="wide")
 
 st.title("🏦 Loan Application Assistant")
 
-# 1. Loan type and dynamic guidance
-name = st.text_input("Your Name")
-loan_type = st.selectbox("Loan Type", ["home", "personal", "car"])
-# loan_amount = st.number_input("Required Loan Amount", min_value= 0, step = 1000)
-loan_amount = st.slider("Required Loan Amount", min_value = 100000, max_value = 20000000, step = 1000)
-monthly_debt = st.number_input("Monthly Debt Amount", min_value= 0, step = 1000)
+# 🔹 Two-column layout
+left, right = st.columns([2, 1])
 
-if loan_type == "home":
-    st.info("Please upload:\n• 2+ payslips (PDF)\n• CIBIL report (PDF)\n• Property document (PDF)")
-elif loan_type == "personal":
-    st.info("Please upload:\n• 2+ payslips (PDF)\n• CIBIL report (PDF)")
-else:  # car
-    st.info("Please upload:\n• 2+ payslips (PDF)\n• CIBIL report (PDF)\n• Car document (PDF)")
+with left:
+    st.subheader("📌 Applicant Information")
 
-# File upload widgets
-salary_slips = st.file_uploader(
-    "Salary Slips (PDF/JPG/PNG, multiple)", 
-    type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True
-)
-cibil_report = st.file_uploader(
-    "CIBIL Report (PDF/JPG/PNG)", 
-    type=["pdf", "jpg", "jpeg", "png"]
-)
-property_doc = st.file_uploader(
-    "Property Document (PDF/JPG/PNG)", 
-    type=["pdf", "jpg", "jpeg", "png"]
-) if loan_type == "home" else None
-car_doc = st.file_uploader(
-    "Car Document (PDF/JPG/PNG)", 
-    type=["pdf", "jpg", "jpeg", "png"]
-) if loan_type == "car" else None
+    name = st.text_input("Your Name")
+    loan_type = st.selectbox("Loan Type", ["home", "personal", "car"])
+    loan_amount = st.number_input("Required Loan Amount", min_value=0, step=1000)
+    monthly_debt = st.number_input("Monthly Debt Amount", min_value=0, step=1000)
 
-# 3. Submit
-if st.button("Submit Application"):
-    # Validations
-    if not salary_slips or len(salary_slips) < 2:
-        st.error("Please upload at least 2 payslips.")
+    if loan_type == "home":
+        st.info("Please upload:\n✅ 1+ payslips (PDF/JPG/PNG)\n✅ CIBIL report (PDF)\n✅ Property document (PDF)")
+    elif loan_type == "personal":
+        st.info("Please upload:\n✅ 1+ payslips (PDF/JPG/PNG)\n✅ CIBIL report (PDF)")
+    else:  # car
+        st.info("Please upload:\n✅ 1+ payslips (PDF/JPG/PNG)\n✅ CIBIL report (PDF)\n✅ Car document (PDF)")
+
+    salary_slips = st.file_uploader(
+        "Salary Slips (PDF/JPG/PNG, multiple)",
+        type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True
+    )
+    cibil_report = st.file_uploader(
+        "CIBIL Report (PDF/JPG/PNG)",
+        type=["pdf", "jpg", "jpeg", "png"]
+    )
+    property_doc = st.file_uploader(
+        "Property Document (PDF/JPG/PNG)",
+        type=["pdf", "jpg", "jpeg", "png"]
+    ) if loan_type == "home" else None
+    car_doc = st.file_uploader(
+        "Car Document (PDF/JPG/PNG)",
+        type=["pdf", "jpg", "jpeg", "png"]
+    ) if loan_type == "car" else None
+
+    submitted = st.button("🚀 Submit Application")
+
+with right:
+    st.subheader("📜 Loan Report Preview")
+    preview_placeholder = st.empty()
+
+# 🔹 Submit Action
+if submitted:
+    if not salary_slips or len(salary_slips) < 1:
+        st.error("⚠️ Please upload at least 1 payslip.")
     elif not cibil_report:
-        st.error("CIBIL report is required.")
+        st.error("⚠️ CIBIL report is required.")
     elif loan_type == "home" and not property_doc:
-        st.error("Property document is required for home loan.")
+        st.error("⚠️ Property document is required for home loan.")
     elif loan_type == "car" and not car_doc:
-        st.error("Car document is required for car loan.")
+        st.error("⚠️ Car document is required for car loan.")
     else:
         files = []
         files.extend([("salary_slips", (sl.name, sl.getvalue(), sl.type)) for sl in salary_slips])
@@ -105,22 +70,48 @@ if st.button("Submit Application"):
         if car_doc:
             files.append(("car_doc", (car_doc.name, car_doc.getvalue(), car_doc.type)))
 
-        data = {"loan_type": loan_type,
-                "name": name,
-                "monthly_debt": monthly_debt}
+        data = {
+            "loan_type": loan_type,
+            "name": name,
+            "monthly_debt": monthly_debt,
+            "req_loan_amount": loan_amount
+        }
 
         response = requests.post(API_URL, data=data, files=files)
 
-        st.write("Status:", response.status_code)
         if response.ok:
             result = response.json()
-            st.subheader("✅ Eligibility Check")
-            st.json(result["eligibility"])
-            st.subheader("💡 Recommendation & Policy Context")
-            st.json(result["recommendation"])
-            st.subheader("📚 Policy Sources")
-            # for src in result["policy_sources"]:
-            #     loan_cat = src["metadata"].get("loan_type", "unknown").title()
-            #     st.markdown(f"- **{loan_cat}**: {src['text'][:200]}…")
+            decision = result["output"]
+
+            # ✅ Generate Markdown Report
+            md_report = generate_markdown_report(name, decision)
+            preview_placeholder.markdown(md_report, unsafe_allow_html=True)
+
+            # ✅ PDF Download
+            html_report = f"""
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; color: #333; }}
+                    h1 {{ color: #0B5394; }}
+                    h2 {{ color: #1C4587; border-bottom:1px solid #ccc; padding-bottom:4px; }}
+                </style>
+            </head>
+            <body>
+                {md_report.replace("\n", "<br>")}
+            </body>
+            </html>
+            """
+            st.json(decision)
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                pdfkit.from_string(html_report, tmp_pdf.name)
+                with open(tmp_pdf.name, "rb") as pdf_file:
+                    st.download_button(
+                        label="📥 Download Loan Approval Report (PDF)",
+                        data=pdf_file,
+                        file_name=f"{name}_loan_report.pdf",
+                        mime="application/pdf"
+                    )
         else:
-            st.error(f"Error {response.status_code}: {response.text}")
+            st.error(f"❌ Error {response.status_code}: {response.text}")

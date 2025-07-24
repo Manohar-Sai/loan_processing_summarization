@@ -1,20 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import List
+from typing import Any
 
 class DecisionOutput(BaseModel):
     summary: str
-    recommended_loan: float
-    tenure_months: int
-    emi: float
-    dti_percent: float
-    applicable_rules: list
-    next_steps: list
-    # summary: str
-    # applicable_rules: List[str]
-    # next_steps: List[str]
-    # recommended_loan: float
-    # emi: float
-    # dti_percent: float
+    recommendation: str
 
 class CustomerOutput(BaseModel):
     loan_type: str
@@ -26,14 +16,17 @@ class CustomerOutput(BaseModel):
 
 
 class DocumentExtraction(BaseModel):
-    income_annual: float = Field(..., description="Annual income in INR")
+    income_monthly: float = Field(..., description="Annual income in INR")
     cibil_score: int = Field(..., description="CIBIL credit score (integer)")
     asset_value: float = Field(..., description="Property or car value in INR")
-    income_threshold: str = Field(...)
-    income_reasoning: str = Field(...)
 
 
 class PolicyThresholdsSchema(BaseModel):
     min_cibil: int
     max_dti: float
     interest_rate: float
+    elegible_income: str
+    income_threshold: str
+    income_reasoning: str
+    max_tenure: int
+    min_tenure: int
