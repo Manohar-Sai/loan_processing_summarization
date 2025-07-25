@@ -10,12 +10,12 @@ def generate_markdown_report(applicant_name: str, decision: dict) -> str:
 **Loan Type:** {decision.get('loan_type', 'N/A')}  
 """
     if decision['eligible']:
-        md += """**Status:** Rejected"""
-    else:
         md += """**Status:** Approved"""
+    else:
+        md += """**Status:** Rejected"""
         
     md +=f"""
-    
+
 **Summary:** {decision.get('summary', '')}  
 
 ---
