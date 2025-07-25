@@ -16,7 +16,7 @@ def eligibility_risk_assessment_agent(applicant_data: Dict[str, Any]) -> Dict[st
     loan_type = applicant_data.get('loan_type', 'personal')
     income = float(applicant_data.get("income_monthly", 0))
     cibil = int(applicant_data.get("cibil_score", 0))
-    existing_monthly_debt = float(applicant_data.pop("existing_debt")) if "existing_debt" in applicant_data else 0
+    existing_monthly_debt = float(applicant_data.pop("monthly_debt")) if "monthly_debt" in applicant_data else 0
 
     llm = get_gemini_llm()
 
@@ -92,7 +92,6 @@ def eligibility_risk_assessment_agent(applicant_data: Dict[str, Any]) -> Dict[st
         return result
 
     # 2. DTI check
-    print(dti)
     if dti > max_dti:
         result["eligible"] = False
         result["reasons"].append(f"DTI {dti:.1f}% > allowed {max_dti}%")
