@@ -8,6 +8,13 @@ def generate_markdown_report(applicant_name: str, decision: dict) -> str:
 
 **Applicant:** {applicant_name}  
 **Loan Type:** {decision.get('loan_type', 'N/A')}  
+"""
+    if decision['eligible']:
+        md += """**Status:** Rejected"""
+    else:
+        md += """**Status:** Approved"""
+        
+    md +="""
 **Summary:** {decision.get('summary', '')}  
 
 ---
@@ -54,6 +61,6 @@ def generate_markdown_report(applicant_name: str, decision: dict) -> str:
         md += """\n---\n## 📝 Recommendation
         
         """
-        md += str(decision["recommendation"])
+        md += f"{decision.get("recommendation",[])}"
     md += "\n---\n**This report is system-generated based on current loan policies.**"
     return md

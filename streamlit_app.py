@@ -1,32 +1,38 @@
 import streamlit as st
-import requests
 import tempfile
 import pdfkit
-from core.report_generator import generate_markdown_report
 import markdown
-
-# API_URL = "http://localhost:8000/process_loan/"
-
-
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from core.report_generator import generate_markdown_report
 from langgraph.graph import StateGraph, END
 from agents.customer_agent import customer_interaction_agent
 from agents.document_agent import document_processing_agent
 from agents.eligibility_agent import eligibility_risk_assessment_agent
 from agents.decision_agent import decision_recommendation_agent
-from fastapi.middleware.cors import CORSMiddleware
 from typing import TypedDict, Any, List
 
+import re
 
-# app = FastAPI(title="Gemini Loan Processor")
+def remove_emojis(text: str) -> str:
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags
+        "\U00002700-\U000027BF"  # other symbols
+        "\U0001F900-\U0001F9FF"  # supplemental symbols
+        "\U00002600-\U000026FF"  # misc symbols
+        "\U00002B00-\U00002BFF"  # arrows
+        "]+",
+        flags=re.UNICODE
+    )
+    return emoji_pattern.sub(r'', text)
 
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["http://localhost:8501"],
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+def fix_encoding(text: str) -> str:
+    try:
+        return text.encode('latin1').decode('utf-8')
+    except:
+        return text
 
 class LoanState(TypedDict):
     name: str
@@ -35,15 +41,12 @@ class LoanState(TypedDict):
     income_monthly: Any
     asset_value: Any
     monthly_debt: Any
-    
     eligible: Any
     reasons: Any
     policy_info: Any
     max_loan: Any
     sources: List[str]
     DTI: Any
-
-    
     recommendation: str
     summary: str
     recommended_loan: int
@@ -52,14 +55,8 @@ class LoanState(TypedDict):
     next_steps: Any
     updated_DTI: Any
 
-
-
+# Initialize the workflow graph
 graph = StateGraph(LoanState)
-
-def customer_node(s: LoanState):
-    print("stypid lag", s.keys())
-    s["query"] = customer_interaction_agent(s["query"])
-    return s
 
 def eligibility_node(s: LoanState):
     applicant = {
@@ -69,56 +66,50 @@ def eligibility_node(s: LoanState):
         "monthly_debt": s["monthly_debt"],
     }
     if s['loan_type'] != 'personal':
-        applicant |= {"asset_value": s["asset_value"],}
+        applicant |= {"asset_value": s["asset_value"]}
     result = eligibility_risk_assessment_agent(applicant)
     for key, value in result.items():
         s[key] = value
     return s
 
 def decision_node(s: LoanState):
-    # if not s["eligible"]:
-    #     s["recommendation"] = None
-    #     s["policy_sources"] = []
-    #     return s
     res = decision_recommendation_agent(s)
     for key, value in res.items():
         s[key] = value
     return s
 
-# creating graph nodes
+# Create graph nodes and edges
 graph.add_node("eligibility_node", eligibility_node)
 graph.add_node("decision_node", decision_node)
-
-# adding entry point and edges
 graph.set_entry_point("eligibility_node")
 graph.add_edge("eligibility_node", "decision_node")
 graph.add_edge("decision_node", END)
 workflow = graph.compile()
 
-
-# # app
-# # @app.post("/process_loan/")
 def process_loan(
-        name: str = Form(...),
-        loan_type: str = Form(...),
-        req_loan_amount: float = Form(...),
-        monthly_debt: float = Form(...),
-        cibil_report: UploadFile = File(...),
-        salary_slips: List[UploadFile] = File(...), 
-        property_doc: UploadFile = File(None),
-        car_doc: UploadFile = File(None)
-    ):
+    name: str,
+    loan_type: str,
+    monthly_debt: float,
+    cibil_report,
+    salary_slips,
+    property_doc=None,
+    car_doc=None
+):
+    # Input validation
     if loan_type not in ("home", "personal", "car"):
-        raise HTTPException(status_code=400, detail="Invalid loan_type")
+        st.error("Invalid loan type")
+        return None
+    if not salary_slips or len(salary_slips) < 1:
+        st.error("At least 1 salary slip file is required")
+        return None
+    if loan_type == "home" and not property_doc:
+        st.error("Property document required for home loan")
+        return None
+    if loan_type == "car" and not car_doc:
+        st.error("Car document required for car loan")
+        return None
 
-    if len(salary_slips) < 1:
-        raise HTTPException(status_code=400, detail="At least 1 salary slip file is required")
-
-    if loan_type == "home" and property_doc is None:
-        raise HTTPException(status_code=400, detail="Property document required for home loan")
-
-    if loan_type == "car" and car_doc is None:
-        raise HTTPException(status_code=400, detail="Car document required for car loan")
+    # Prepare document bytes
     salary_bytes = {slip.name: slip.getvalue() for slip in salary_slips}
     cibil_bytes = {cibil_report.name: cibil_report.getvalue()}
     asset_bytes = {}
@@ -126,13 +117,15 @@ def process_loan(
         asset_bytes = {property_doc.name: property_doc.getvalue()}
     elif loan_type == "car" and car_doc:
         asset_bytes = {car_doc.name: car_doc.getvalue()}
-    # Extract via document agent
+
+    # Process documents
     doc_data = document_processing_agent(
         salary_slips=salary_bytes,
         cibil_pdf=cibil_bytes,
         asset_docs=asset_bytes
     )
 
+    # Initialize and process loan state
     state = LoanState()
     state["name"] = name
     state["loan_type"] = loan_type
@@ -142,36 +135,17 @@ def process_loan(
     state['monthly_debt'] = monthly_debt
 
     state = workflow.invoke(state)
+    return {"output": state}
 
-    return {
-        # "customer_name": name,
-        # "eligibility": state["eligibility"],
-        # "recommendation": state["recommendation"],
-        # # "policy_sources": state["policy_sources"]
-        "output": state
-    }
-
-# # @app.get("/")
-# def root():
-#     return {"message": "multi-agent home loan API running!"}
-
-
-# def hello(name):
-#     return "dummy ga"
-
-
-
-
+# Streamlit UI
 st.set_page_config(page_title="🏦 Loan Eligibility Checker", layout="wide")
-
 st.title("🏦 Loan Application Assistant")
 
-# 🔹 Two-column layout
+# Two-column layout
 left, right = st.columns([2, 1])
 
 with left:
     st.subheader("📌 Applicant Information")
-
     name = st.text_input("Your Name")
     loan_type = st.selectbox("Loan Type", ["home", "personal", "car"])
     monthly_debt = st.number_input("Monthly Debt Amount", min_value=0, step=1000)
@@ -185,7 +159,8 @@ with left:
 
     salary_slips = st.file_uploader(
         "Salary Slips (PDF/JPG/PNG, multiple)",
-        type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True
+        type=["pdf", "jpg", "jpeg", "png"],
+        accept_multiple_files=True
     )
     cibil_report = st.file_uploader(
         "CIBIL Report (PDF/JPG/PNG)",
@@ -203,57 +178,28 @@ with left:
     submitted = st.button("🚀 Submit Application")
 
 with right:
-    # st.subheader("📜 Loan Report Preview")
     preview_placeholder = st.empty()
 
-# 🔹 Submit Action
+# Submit action
 if submitted:
-    if not salary_slips or len(salary_slips) < 1:
-        st.error("⚠️ Please upload at least 1 payslip.")
-    elif not cibil_report:
-        st.error("⚠️ CIBIL report is required.")
-    elif loan_type == "home" and not property_doc:
-        st.error("⚠️ Property document is required for home loan.")
-    elif loan_type == "car" and not car_doc:
-        st.error("⚠️ Car document is required for car loan.")
-    else:
-        files = []
-        files.extend([("salary_slips", (sl.name, sl.getvalue(), sl.type)) for sl in salary_slips])
-        files.append(("cibil_report", (cibil_report.name, cibil_report.getvalue(), cibil_report.type)))
-        if property_doc:
-            files.append(("property_doc", (property_doc.name, property_doc.getvalue(), property_doc.type)))
-        if car_doc:
-            files.append(("car_doc", (car_doc.name, car_doc.getvalue(), car_doc.type)))
+    result = process_loan(
+        name=name,
+        loan_type=loan_type,
+        monthly_debt=monthly_debt,
+        cibil_report=cibil_report,
+        salary_slips=salary_slips,
+        property_doc=property_doc,
+        car_doc=car_doc
+    )
 
-        data = {
-            "loan_type": loan_type,
-            "name": name,
-            "monthly_debt": monthly_debt,
-        }
-        # st.markdown(hello('this is working'))
-
-        # response = requests.post(API_URL, data=data, files=files)
-        result = process_loan(
-            name,
-            loan_type,
-            monthly_debt,
-            cibil_report,
-            salary_slips,
-            property_doc,
-            car_doc         
-        )
-
-        # if response.ok:
-        #     result = response.json()
+    if result:
         decision = result["output"]
-
-        # ✅ Generate Markdown Report
         md_report = generate_markdown_report(name, decision)
         preview_placeholder.markdown(md_report, unsafe_allow_html=True)
 
-        # ✅ PDF Download
+        # Generate PDF
         html_body = markdown.markdown(md_report)
-        html_report = f"""
+        html_report = fix_encoding(remove_emojis(f"""
         <html>
         <head>
             <style>
@@ -266,9 +212,8 @@ if submitted:
             {html_body}
         </body>
         </html>
-        """
-        st.json(decision)
-        
+        """))
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
             pdfkit.from_string(html_report, tmp_pdf.name)
             with open(tmp_pdf.name, "rb") as pdf_file:
@@ -278,5 +223,5 @@ if submitted:
                     file_name=f"{name}_loan_report.pdf",
                     mime="application/pdf"
                 )
-        # else:
-        #     st.error(f"❌ Error {response.status_code}: {response.text}")
+
+        st.json(decision)
