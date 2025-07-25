@@ -14,7 +14,8 @@ def generate_markdown_report(applicant_name: str, decision: dict) -> str:
     else:
         md += """**Status:** Approved"""
         
-    md +="""
+    md +=f"""
+    
 **Summary:** {decision.get('summary', '')}  
 
 ---
